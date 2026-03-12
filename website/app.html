@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Speech-to-Text App | DysarthriaSpeech AI</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="styles/main.css">
+
+</head>
+
+<body class="app-page">
+
+    <nav class="navbar navbar-app">
+
+        <div class="nav-container">
+
+            <a href="index.html" class="nav-logo">
+
+                <span class="logo-icon">🧠</span>
+                <span class="logo-text">DysarthriaSpeech<span class="logo-accent">AI</span></span>
+
+            </a>
+
+            <a href="index.html" class="nav-link">Home</a>
+
+        </div>
+
+    </nav>
+
+
+    <main class="app-main">
+
+        <div class="app-container">
+
+            <header class="app-header">
+
+                <h1 class="app-title">Speech-to-Text Converter</h1>
+                <p class="app-subtitle">Record your speech and convert it into text using AI</p>
+
+            </header>
+
+
+            <section class="recording-section">
+
+                <div class="recording-card glass-card">
+
+
+                    <div class="recording-header">
+
+                        <h2>Voice Recording</h2>
+
+                        <div class="recording-status">
+
+                            <span class="status-dot"></span>
+                            <span id="statusText">Ready to record</span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="recording-controls">
+
+                        <button id="recordBtn" class="record-btn">
+
+                            <span>🎤</span>
+                            <span id="recordText">Start Recording</span>
+
+                        </button>
+
+                    </div>
+
+
+                    <div class="audio-playback hidden" id="audioPlayback">
+
+                        <audio id="audioPlayer" controls></audio>
+
+                        <div class="playback-actions">
+
+                            <button id="transcribeBtn" class="btn btn-primary">
+                                🧠 Transcribe Speech
+                            </button>
+
+                            <button id="clearBtn" class="btn btn-secondary">
+                                🗑️ Clear
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <section class="transcription-section">
+
+                <div class="transcription-card glass-card">
+
+                    <h2>Transcription Result</h2>
+
+                    <div id="transcriptionResult">
+
+                        <p>Your transcription will appear here</p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+
+
+    <script>
+
+        let mediaRecorder;
+        let audioChunks = [];
+        let recordedBlob = null;
+        let recording = false;
+
+        const recordBtn = document.getElementById("recordBtn");
+        const recordText = document.getElementById("recordText");
+        const statusText = document.getElementById("statusText");
+        const audioPlayer = document.getElementById("audioPlayer");
+        const audioPlayback = document.getElementById("audioPlayback");
+        const transcribeBtn = document.getElementById("transcribeBtn");
+        const resultBox = document.getElementById("transcriptionResult");
+        const clearBtn = document.getElementById("clearBtn");
+
+
+
+        recordBtn.addEventListener("click", async () => {
+
+            if (!recording) {
+
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                mediaRecorder = new MediaRecorder(stream);
+
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = e => {
+
+                    audioChunks.push(e.data);
+
+                };
+
+                mediaRecorder.onstop = () => {
+
+                    recordedBlob = new Blob(audioChunks, { type: "audio/webm" });
+
+                    audioPlayer.src = URL.createObjectURL(recordedBlob);
+
+                    audioPlayback.classList.remove("hidden");
+
+                    statusText.innerText = "Recording finished";
+
+                };
+
+                mediaRecorder.start();
+
+                recordText.innerText = "Stop Recording";
+
+                statusText.innerText = "Recording...";
+
+                recording = true;
+
+            }
+
+            else {
+
+                mediaRecorder.stop();
+
+                recordText.innerText = "Start Recording";
+
+                recording = false;
+
+            }
+
+        });
+
+
+
+        transcribeBtn.addEventListener("click", async () => {
+
+            if (!recordedBlob) {
+
+                alert("Please record audio first");
+                return;
+
+            }
+
+            const formData = new FormData();
+
+            formData.append("audio", recordedBlob, "speech.webm");
+
+            resultBox.innerHTML = "<p>Processing speech...</p>";
+
+            try {
+
+                const response = await fetch("http://127.0.0.1:5000/predict", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                resultBox.innerHTML = "<h3>" + data.prediction + "</h3>";
+
+            }
+            catch (error) {
+
+                console.error(error);
+
+                resultBox.innerHTML = "<p>Error connecting to AI model</p>";
+
+            }
+
+        });
+
+
+
+        clearBtn.addEventListener("click", () => {
+
+            recordedBlob = null;
+
+            audioPlayback.classList.add("hidden");
+
+            resultBox.innerHTML = "<p>Your transcription will appear here</p>";
+
+            statusText.innerText = "Ready to record";
+
+        });
+
+    </script>
+
+</body>
+
+</html>
