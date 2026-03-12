@@ -1,0 +1,20 @@
+# DysarthriaSpeech AI - Backend Requirements
+# Python 3.8+ required
+
+# Web Framework
+flask>=2.0.0
+flask-cors>=3.0.0
+
+# Speech Recognition
+openai-whisper>=20230314
+SpeechRecognition>=3.10.0
+
+# Audio Processing
+pydub>=0.25.0
+librosa>=0.10.0
+
+# Metrics
+jiwer>=3.0.0
+
+# Utilities
+numpy>=1.21.0
