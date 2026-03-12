@@ -181,4 +181,4 @@ Academic/Research Use Only
 
 ## 👥 Contributors
 
-4th Semester SLAM Project
+T. Navaneeth Reddy
